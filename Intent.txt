@@ -4,6 +4,12 @@
       "intent": "IngredientIntent"
     },
     {
+      "intent": “MainIntent"
+    },
+    {
+      "intent": “DirectionIntent"
+    },
+    {
       "intent": "AMAZON.YesIntent"
     },
     {
