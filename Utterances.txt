@@ -1,0 +1,11 @@
+IngredientIntent What are the ingredients?
+IngredientIntent ingredients
+IngredientIntent next ingredeint
+IngredientIntent last ingredient
+IngredientIntent start again.
+IngredientIntent main menu
+IngredientIntent exit
+IngredientIntent quit
+IngredientIntent go back
+
+MainIntent find {items}
