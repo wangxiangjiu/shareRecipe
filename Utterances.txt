@@ -1,6 +1,6 @@
 IngredientIntent What are the ingredients?
 IngredientIntent ingredients
-IngredientIntent next ingredeint
+IngredientIntent next ingredient
 IngredientIntent last ingredient
 IngredientIntent start again.
 IngredientIntent main menu
@@ -9,3 +9,14 @@ IngredientIntent quit
 IngredientIntent go back
 
 MainIntent find {items}
+MainIntent I’d like to make {item}
+MainIntent what can I say
+MainIntent exit
+MainIntent quit
+
+DirectionIntent read recipe
+DirectionIntent start
+DirectionIntent next step
+DirectionIntent last step
+DirectionIntent exit
+DirectionIntent quit
