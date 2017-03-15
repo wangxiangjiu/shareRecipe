@@ -24,7 +24,7 @@ var newSessionHandlers = {
             this.attributes['endedSessionCount'] = 0;
             this.attributes['gamesPlayed'] = 0;
         }
-        this.handler.state = states.STARTMODE;
+        this.handler.state = states.MAINMODE;
         this.emit(':ask', 'recipe assistant, what recipe woiuld you like to make?');
     },
     "AMAZON.StopIntent": function() {

@@ -5,6 +5,12 @@
     },
     {
       "intent": “MainIntent"
+      "slots": [
+        {
+          "name": "SearchTerm",
+          "type": "SEARCH_TERMS"
+        }
+      ]
     },
     {
       "intent": “DirectionIntent"
