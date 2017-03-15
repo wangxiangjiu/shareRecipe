@@ -44,11 +44,26 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
     'NewSession': function () {
         this.emit('NewSession'); // Uses the handler in newSessionHandlers
     },
-    'AMAZON.HelpIntent': function() {
-        var message = 'I will think of a number between zero and one hundred, try to guess and I will tell you if it' +
-            ' is higher or lower. Do you want to start the game?';
-        this.emit(':ask', message, message);
+    'MainIntent': function() {
+        var menuItem = this.event.request.intent.slots.SearchTerm.value;
+        console.log('user chose: ' + menuItem);
+
+        if(menuItem === "Sushi Roll" ){
+            this.emit('TooHigh', guessNum);
+        } else if( menuItem === "Sandwich1"){
+            this.emit('TooLow', guessNum);
+        } else if (guessNum === targetNum){
+            // With a callback, use the arrow function to preserve the correct 'this' context
+            this.emit('JustRight', () => {
+                this.emit(':ask', guessNum.toString() + 'is correct! Would you like to play a new game?',
+                'Say yes to start a new game, or no to end the game.');
+        })
+        } else {
+            this.emit('NotANum');
+        }
     },
+
+
     'AMAZON.YesIntent': function() {
         this.attributes["guessNumber"] = Math.floor(Math.random() * 100);
         this.handler.state = states.GUESSMODE;
