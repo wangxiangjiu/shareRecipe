@@ -1,12 +1,12 @@
 'use strict';
 var Alexa = require("alexa-sdk");
-var appId = 'amzn1.ask.skill.dd40a592-f723-409c-b5e8-95d40c542513'; // This is Sean's id
-//var appId = 'amzn1.ask.skill.5a257a2a-1762-48c3-80c9-cc30b0d548fb'; // This is Will's id
+// var appId = 'amzn1.ask.skill.dd40a592-f723-409c-b5e8-95d40c542513'; // This is Sean's id
+var appId = 'amzn1.ask.skill.5a257a2a-1762-48c3-80c9-cc30b0d548fb'; // This is Will's id
 
 exports.handler = function(event, context, callback) {
     var alexa = Alexa.handler(event, context);
     alexa.appId = appId;
-    alexa.dynamoDBTableName = 'Recipes'; // This is broken.  
+    alexa.dynamoDBTableName = 'RecipeState'; // This is broken.  
 
     // change necessary handlers names
     alexa.registerHandlers(newSessionHandlers, ingredientHandlers, mainHandlers, directionHandlers);
