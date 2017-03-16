@@ -64,7 +64,7 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
         }
     },
     'AMAZON.HelpIntent': function() {
-        this.emit(':ask', 'you can say sushi rolls, sandwiches);
+        this.emit(':ask', 'you can say sushi rolls, sandwiches');
     },
     "AMAZON.StopIntent": function() {
       console.log("STOPINTENT");
