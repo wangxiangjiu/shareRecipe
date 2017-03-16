@@ -1,12 +1,12 @@
 'use strict';
 var Alexa = require("alexa-sdk");
 var appId = 'amzn1.ask.skill.dd40a592-f723-409c-b5e8-95d40c542513'; // This is Sean's id//'amzn1.echo-sdk-ams.app.your-skill-id';
-var appId = 'amzn1.ask.skill.5a257a2a-1762-48c3-80c9-cc30b0d548fb'; // This is Will's id
+//var appId = 'amzn1.ask.skill.5a257a2a-1762-48c3-80c9-cc30b0d548fb'; // This is Will's id
 
 exports.handler = function(event, context, callback) {
     var alexa = Alexa.handler(event, context);
     alexa.appId = appId;
-    alexa.dynamoDBTableName = 'Recipes';
+    alexa.dynamoDBTableName = 'highLowGuessUsers';
 
     // change necessary handlers names
     alexa.registerHandlers(newSessionHandlers, ingredientHandlers, mainHandlers, directionHandlers);
@@ -26,7 +26,7 @@ var newSessionHandlers = {
             this.attributes['gamesPlayed'] = 0;
         }
         this.handler.state = states.MAINMODE;
-        this.emit(':ask', 'recipe assistant, what recipe woiuld you like to make?');
+        this.emit(':ask', 'recipe assistant, what recipe would you like to make?');
     },
     "AMAZON.StopIntent": function() {
       this.emit(':tell', "Goodbye!");  
@@ -65,6 +65,10 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
         } else {
             this.emit('NotANum');
         }
+    },
+    'AMAZON.HelpIntent': function() {
+        this.emit(':ask', 'you can say sushi rolls, sandwiches' +
+            ' if it is higher or lower.', 'Try saying a number.');
     },
     "AMAZON.StopIntent": function() {
       console.log("STOPINTENT");
