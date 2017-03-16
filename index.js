@@ -6,7 +6,7 @@ var appId = 'amzn1.ask.skill.dd40a592-f723-409c-b5e8-95d40c542513'; // This is S
 exports.handler = function(event, context, callback) {
     var alexa = Alexa.handler(event, context);
     alexa.appId = appId;
-    alexa.dynamoDBTableName = 'highLowGuessUsers';
+    alexa.dynamoDBTableName = 'highLowGuessUsers'; // NEED TO CHANGE THIS TO RECIPES. 
 
     // change necessary handlers names
     alexa.registerHandlers(newSessionHandlers, ingredientHandlers, mainHandlers, directionHandlers);
@@ -22,8 +22,8 @@ var states = {
 var newSessionHandlers = {
     'NewSession': function() {
         if(Object.keys(this.attributes).length === 0) {
-            this.attributes['endedSessionCount'] = 0;
-            this.attributes['gamesPlayed'] = 0;
+            this.attributes['currentRecipe'] = "";
+            this.attributes['currentMode'] = "";
         }
         this.handler.state = states.MAINMODE;
         this.emit(':ask', 'recipe assistant, what recipe would you like to make?');
@@ -46,29 +46,23 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
         this.emit('NewSession'); // Uses the handler in newSessionHandlers
     },
     'MainIntent': function() {
-        var menuItem = this.event.request.intent.slots.SearchTerm.value;
-        console.log('user chose: ' + menuItem);
+        var user_res = this.event.request.intent.slots.SearchTerm.value;
+        console.log('user chose: ' + user_res);
 
-        if(menuItem === "Sushi Roll" ){
-	     this.emit(':ask', 'you can say ingredients, direc');
-	     this.handler.state = states.IngMODE;
-	    // need to use JQuery
-            //this.emit('TooHigh', guessNum);
-        } else if( menuItem === "Sandwich1"){
-            //this.emit('TooLow', guessNum);
-        } else if (guessNum === targetNum){
-            // With a callback, use the arrow function to preserve the correct 'this' context
-            this.emit('JustRight', () => {
-                this.emit(':ask', guessNum.toString() + 'is correct! Would you like to play a new game?',
-                'Say yes to start a new game, or no to end the game.');
-        })
+        if(user_res === "Sushi Roll" ){
+	    this.attributes['currentRecipe'] = "Sushi"
+            this.emit(':ask', 'you can say ingredients, direc');
+	   	    // need to use JQuery
+        } else if( user_res === "Sandwich"){
+            this.attributes['currentRecipe'] = "Sandwich"
+        } else if (user_res === "What can I say"){
+	    this.emit(':tell', "You can say sushi roll, sandwich"); 	
         } else {
             this.emit('NotANum');
         }
     },
     'AMAZON.HelpIntent': function() {
-        this.emit(':ask', 'you can say sushi rolls, sandwiches' +
-            ' if it is higher or lower.', 'Try saying a number.');
+        this.emit(':ask', 'you can say sushi rolls, sandwiches);
     },
     "AMAZON.StopIntent": function() {
       console.log("STOPINTENT");
