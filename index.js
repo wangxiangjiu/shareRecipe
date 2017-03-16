@@ -13,6 +13,10 @@ var recipeTable;
 var tables = dynamo.scan({TableName: "Recipes"}, onScan);
 var recipeArray = "dummy text";
 var recipeList = ""
+
+function toLower(x) {
+    return x.toLowerCase();
+}
 function onScan(err, data) {
     if (err) {
         console.error("failed")
@@ -24,10 +28,11 @@ function onScan(err, data) {
         recipeTable.Items.forEach(function(recipe) {
             recipeArray.push(recipe.RecipeName);
         });
+        recipeArray = recipeArray.map(toLower);
         recipeList = JSON.stringify(recipeArray);
-
     }
 }
+
 
 
 exports.handler = function(event, context, callback) {
@@ -48,7 +53,6 @@ var states = {
 var newSessionHandlers = {
     'NewSession': function() {
         if(Object.keys(this.attributes).length === 0) {
-            this.attributes['currentMode'] = "";
             this.attributes['currentRecipe'] = "";
         }
         this.handler.state = states.MAINMODE;
@@ -77,29 +81,25 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
     'MainIntent': function() {
         var user_res = this.event.request.intent.slots.item.value;
         console.log('user chose: ' + user_res);
-        var string = JSON.stringify(tables)
         if(user_res === "what can I say" ){
-	        this.attributes['currentRecipe'] = "Sushi";
-            this.emit(':ask', string);
-	   	    // need to use JQuery
-        } else if( user_res === "sandwich"){
-            this.attributes['currentRecipe'] = "Sandwich";
-        } else if (user_res === "sushi roll"){
-            this.emit(':tell', "You can say sushi roll, sandwich");
-        } else {
+            this.emit(':ask', 'you can say' + recipeList);
+	   	    //list of other items we can say at this point?
+        }  else {
             this.emit('NotANum');
         }
     },
-    'AMAZON.Food': function() {
-        var food = this.event.request.intent.slots.item.value;
-
-        if (table.includes(food)) {
-            this.attributes['currentRecipe'] = food;
-            this.emit(':ask', 'you can say what are the ingredients or go to directions');
-        } else {
-            this.emit('ask', 'sorry, what you want to make is not in our list of recipes')
-        }
-
+    'FoodIntent': function() {
+        var food = this.event.request.intent.slots.food.value;
+	    for (var i = 0; i < recipeArray.length; i++){
+	        if (recipeArray[i] === food) {
+            	this.attributes['currentRecipe'] = food;
+                this.attributes['currentIngredientIndex'] = 0;
+            	this.handler.state = states.INGREDIENTMODE;
+                this.emit(':ask', 'you can say what are the ingredients');
+	        } else {
+		        this.emit('ask', 'sorry, what you want to make is not in our list of recipes');
+	        }
+	    }
     },
     'AMAZON.HelpIntent': function() {
         this.emit(':ask', 'you can say sushi rolls, sandwiches');
@@ -119,7 +119,7 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
     },
     'Unhandled': function() {
         console.log("UNHANDLED");
-        var message = 'Say yes to continue, or no to end the game.';
+        var message = 'We do not have this recipe, please say one of' + recipeList ;
         this.emit(':ask', message, message);
     }
 });
