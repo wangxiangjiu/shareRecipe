@@ -6,7 +6,7 @@ var appId = 'amzn1.ask.skill.dd40a592-f723-409c-b5e8-95d40c542513'; // This is S
 exports.handler = function(event, context, callback) {
     var alexa = Alexa.handler(event, context);
     alexa.appId = appId;
-    alexa.dynamoDBTableName = 'Recipes'; // This is broken.  
+    alexa.dynamoDBTableName = 'rightRecipes';  
 
     // change necessary handlers names
     alexa.registerHandlers(newSessionHandlers, ingredientHandlers, mainHandlers, directionHandlers);
@@ -22,8 +22,6 @@ var states = {
 var newSessionHandlers = {
     'NewSession': function() {
         if(Object.keys(this.attributes).length === 0) {
-          //  this.attributes['endedSessionCount'] = 0;
-          //  this.attributes['gamesPlayed'] = 0;
             this.attributes['currentMode'] = "";
             this.attributes['currentRecipe'] = "";
         }
@@ -51,13 +49,13 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
         var user_res = this.event.request.intent.slots.Item.value;
         console.log('user chose: ' + user_res);
 
-        if(user_res === "Sushi Roll" ){
-	        this.attributes['currentRecipe'] = "Sushi";
+        if(user_res === "What can I say" ){
+	    this.attributes['currentRecipe'] = "Sushi";
             this.emit(':ask', 'you can say ingredients, directions');
 	   	    // need to use JQuery
         } else if( user_res === "Sandwich"){
             this.attributes['currentRecipe'] = "Sandwich";
-        } else if (user_res === "What can I say"){
+        } else if (user_res === "Sushi Roll"){
 	    this.emit(':tell', "You can say sushi roll, sandwich");
         } else {
             this.emit('NotANum');
