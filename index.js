@@ -1,13 +1,39 @@
 'use strict';
+console.log('Loading function');
+
+const doc = require('dynamodb-doc');
+
+const dynamo = new doc.DynamoDB();
+
+
 var Alexa = require("alexa-sdk");
 var appId = 'amzn1.ask.skill.dd40a592-f723-409c-b5e8-95d40c542513'; // This is Sean's id
 //var appId = 'amzn1.ask.skill.5a257a2a-1762-48c3-80c9-cc30b0d548fb'; // This is Will's id
+var recipeTable;
+var tables = dynamo.scan({TableName: "Recipes"}, onScan);
+var recipeArray = "dummy text";
+var recipeList = ""
+function onScan(err, data) {
+    if (err) {
+        console.error("failed")
+        this.emit(':tell', "something went wrong");
+    } else {
+        console.log("success");
+        recipeTable = data;
+        recipeArray = [];
+        recipeTable.Items.forEach(function(recipe) {
+            recipeArray.push(recipe.RecipeName);
+        });
+        recipeList = JSON.stringify(recipeArray);
+
+    }
+}
+
 
 exports.handler = function(event, context, callback) {
     var alexa = Alexa.handler(event, context);
     alexa.appId = appId;
-    alexa.dynamoDBTableName = 'rightRecipes';  
-
+    alexa.dynamoDBTableName = 'rightRecipes';
     // change necessary handlers names
     alexa.registerHandlers(newSessionHandlers, ingredientHandlers, mainHandlers, directionHandlers);
     alexa.execute();
@@ -26,7 +52,8 @@ var newSessionHandlers = {
             this.attributes['currentRecipe'] = "";
         }
         this.handler.state = states.MAINMODE;
-        this.emit(':ask', 'recipe assistant, what recipe would you like to make?');
+        //this.emit(':ask', recipeArray);
+        this.emit(':ask', 'recipe assistant, what recipe would you like to make? You can say' + recipeList);
     },
     "AMAZON.StopIntent": function() {
       this.emit(':tell', "Goodbye!");  
@@ -41,25 +68,38 @@ var newSessionHandlers = {
     }
 };
 
+
+
 var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
     'NewSession': function () {
         this.emit('NewSession'); // Uses the handler in newSessionHandlers
     },
     'MainIntent': function() {
-        var user_res = this.event.request.intent.slots.Item.value;
+        var user_res = this.event.request.intent.slots.item.value;
         console.log('user chose: ' + user_res);
-
-        if(user_res === "What can I say" ){
-	    this.attributes['currentRecipe'] = "Sushi";
-            this.emit(':ask', 'you can say ingredients, directions');
+        var string = JSON.stringify(tables)
+        if(user_res === "what can I say" ){
+	        this.attributes['currentRecipe'] = "Sushi";
+            this.emit(':ask', string);
 	   	    // need to use JQuery
-        } else if( user_res === "Sandwich"){
+        } else if( user_res === "sandwich"){
             this.attributes['currentRecipe'] = "Sandwich";
-        } else if (user_res === "Sushi Roll"){
-	    this.emit(':tell', "You can say sushi roll, sandwich");
+        } else if (user_res === "sushi roll"){
+            this.emit(':tell', "You can say sushi roll, sandwich");
         } else {
             this.emit('NotANum');
         }
+    },
+    'AMAZON.Food': function() {
+        var food = this.event.request.intent.slots.item.value;
+
+        if (table.includes(food)) {
+            this.attributes['currentRecipe'] = food;
+            this.emit(':ask', 'you can say what are the ingredients or go to directions');
+        } else {
+            this.emit('ask', 'sorry, what you want to make is not in our list of recipes')
+        }
+
     },
     'AMAZON.HelpIntent': function() {
         this.emit(':ask', 'you can say sushi rolls, sandwiches');
@@ -89,25 +129,9 @@ var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
         this.handler.state = '';
         this.emitWithState('NewSession'); // Equivalent to the Start Mode NewSession handler
     },
-    // 'NumberGuessIntent': function() {
-    //     var guessNum = parseInt(this.event.request.intent.slots.number.value);
-    //     var targetNum = this.attributes["guessNumber"];
-    //     console.log('user guessed: ' + guessNum);
+    'IngredientIntent': function() {
 
-    //     if(guessNum > targetNum){
-    //         this.emit('TooHigh', guessNum);
-    //     } else if( guessNum < targetNum){
-    //         this.emit('TooLow', guessNum);
-    //     } else if (guessNum === targetNum){
-    //         // With a callback, use the arrow function to preserve the correct 'this' context
-    //         this.emit('JustRight', () => {
-    //             this.emit(':ask', guessNum.toString() + 'is correct! Would you like to play a new game?',
-    //             'Say yes to start a new game, or no to end the game.');
-    //     })
-    //     } else {
-    //         this.emit('NotANum');
-    //     }
-    // },
+    },
     'AMAZON.HelpIntent': function() {
         this.emit(':ask', 'I am thinking of a number between zero and one hundred, try to guess and I will tell you' +
             ' if it is higher or lower.', 'Try saying a number.');
