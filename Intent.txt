@@ -7,8 +7,8 @@
       "intent": “MainIntent"
       "slots": [
         {
-          "name": "SearchTerm",
-          "type": "SEARCH_TERMS"
+          "name": “item",
+          "type": “LIST_OF_ITEMS"
         }
       ]
     },

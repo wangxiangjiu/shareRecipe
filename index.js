@@ -1,11 +1,11 @@
 'use strict';
 var Alexa = require("alexa-sdk");
-var appId = 'amzn1.ask.skill.5a257a2a-1762-48c3-80c9-cc30b0d548fb'; //'amzn1.echo-sdk-ams.app.your-skill-id';
+var appId = 'amzn1.ask.skill.dd40a592-f723-409c-b5e8-95d40c542513'; //'amzn1.echo-sdk-ams.app.your-skill-id';
 
 exports.handler = function(event, context, callback) {
     var alexa = Alexa.handler(event, context);
     alexa.appId = appId;
-    alexa.dynamoDBTableName = 'recipeAssistant';
+    alexa.dynamoDBTableName = 'Recipes';
 
     // change necessary handlers names
     alexa.registerHandlers(newSessionHandlers, ingredientHandlers, mainHandlers, directionHandlers);
@@ -49,9 +49,12 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
         console.log('user chose: ' + menuItem);
 
         if(menuItem === "Sushi Roll" ){
-            this.emit('TooHigh', guessNum);
+	     this.emit(':ask', 'you can say ingredients, direc');
+	     this.handler.state = states.IngMODE;
+	    // need to use JQuery
+            //this.emit('TooHigh', guessNum);
         } else if( menuItem === "Sandwich1"){
-            this.emit('TooLow', guessNum);
+            //this.emit('TooLow', guessNum);
         } else if (guessNum === targetNum){
             // With a callback, use the arrow function to preserve the correct 'this' context
             this.emit('JustRight', () => {
@@ -61,17 +64,6 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
         } else {
             this.emit('NotANum');
         }
-    },
-
-
-    'AMAZON.YesIntent': function() {
-        this.attributes["guessNumber"] = Math.floor(Math.random() * 100);
-        this.handler.state = states.GUESSMODE;
-        this.emit(':ask', 'Great! ' + 'Try saying a number to start the game.', 'Try saying a number.');
-    },
-    'AMAZON.NoIntent': function() {
-        console.log("NOINTENT");
-        this.emit(':tell', 'Ok, see you next time!');
     },
     "AMAZON.StopIntent": function() {
       console.log("STOPINTENT");

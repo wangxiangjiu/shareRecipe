@@ -8,11 +8,12 @@ IngredientIntent exit
 IngredientIntent quit
 IngredientIntent go back
 
-MainIntent find {items}
+MainIntent find {item}
 MainIntent I’d like to make {item}
 MainIntent what can I say
 MainIntent exit
 MainIntent quit
+MainIntent {item}
 
 DirectionIntent read recipe
 DirectionIntent start
