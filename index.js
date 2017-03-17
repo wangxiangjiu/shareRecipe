@@ -25,7 +25,7 @@ function onScan(err, data) {
         console.log("success");
         recipeTable = data;
         recipeArray = [];
-        recipeTable.Items.forEach(function(recipe) {
+        recipeTable.Items.forEach(function (recipe) {
             recipeArray.push(recipe.RecipeName);
         });
         recipeArray = recipeArray.map(toLower);
@@ -34,8 +34,7 @@ function onScan(err, data) {
 }
 
 
-
-exports.handler = function(event, context, callback) {
+exports.handler = function (event, context, callback) {
     var alexa = Alexa.handler(event, context);
     alexa.appId = appId;
     alexa.dynamoDBTableName = 'rightRecipes';
@@ -51,20 +50,20 @@ var states = {
 };
 
 var newSessionHandlers = {
-    'NewSession': function() {
-        if(Object.keys(this.attributes).length === 0) {
+    'NewSession': function () {
+        if (Object.keys(this.attributes).length === 0) {
             this.attributes['currentRecipe'] = "";
         }
         this.handler.state = states.MAINMODE;
         //this.emit(':ask', recipeArray);
         this.emit(':ask', 'recipe assistant, what recipe would you like to make? You can say' + recipeList);
     },
-    "AMAZON.StopIntent": function() {
-      this.emit(':tell', "Goodbye!");  
-    },
-    "AMAZON.CancelIntent": function() {
-      this.emit(':tell', "Goodbye!");  
-    },
+    // "AMAZON.StopIntent": function () {
+    //     this.emit(':tell', "Goodbye!");
+    // },
+    // "AMAZON.CancelIntent": function () {
+    //     this.emit(':tell', "Goodbye!");
+    // },
     'SessionEndedRequest': function () {
         console.log('session ended!');
         //this.attributes['endedSessionCount'] += 1;
@@ -73,84 +72,148 @@ var newSessionHandlers = {
 };
 
 
-
 var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
     'NewSession': function () {
         this.emit('NewSession'); // Uses the handler in newSessionHandlers
     },
-    'MainIntent': function() {
+    'MainIntent': function () {
         var user_res = this.event.request.intent.slots.item.value;
         console.log('user chose: ' + user_res);
-        if(user_res === "what can I say" ){
+        if (user_res === "what can I say") {
             this.emit(':ask', 'you can say' + recipeList);
-	   	    //list of other items we can say at this point?
-        }  else {
+            //list of other items we can say at this point?
+        } else {
             this.emit('NotANum');
         }
     },
-    'FoodIntent': function() {
+    'FoodIntent': function () {
         var food = this.event.request.intent.slots.food.value;
-	    for (var i = 0; i < recipeArray.length; i++){
-	        if (recipeArray[i] === food) {
-            	this.attributes['currentRecipe'] = food;
+        for (var i = 0; i < recipeArray.length; i++) {
+            if (recipeArray[i] === food) {
+                this.attributes['currentRecipe'] = food.toString();
+                this.attributes['ingredientList'] = null;
                 this.attributes['currentIngredientIndex'] = 0;
-            	this.handler.state = states.INGREDIENTMODE;
+                this.handler.state = states.INGREDIENTMODE;
                 this.emit(':ask', 'you can say what are the ingredients');
-	        } else {
-		        this.emit('ask', 'sorry, what you want to make is not in our list of recipes');
-	        }
-	    }
+            } else {
+                this.emit('ask', 'sorry, what you want to make is not in our list of recipes');
+            }
+        }
     },
-    'AMAZON.HelpIntent': function() {
+    'AMAZON.HelpIntent': function () {
         this.emit(':ask', 'you can say sushi rolls, sandwiches');
     },
-    "AMAZON.StopIntent": function() {
-      console.log("STOPINTENT");
-      this.emit(':tell', "Goodbye!");
-    },
-    "AMAZON.CancelIntent": function() {
-      console.log("CANCELINTENT");
-      this.emit(':tell', "Goodbye!");
-    },
+    // "AMAZON.StopIntent": function () {
+    //     console.log("STOPINTENT");
+    //     this.emit(':tell', "Goodbye!");
+    // },
+    // "AMAZON.CancelIntent": function () {
+    //     console.log("CANCELINTENT");
+    //     this.emit(':tell', "Goodbye!");
+    // },
     'SessionEndedRequest': function () {
         console.log("SESSIONENDEDREQUEST");
         //this.attributes['endedSessionCount'] += 1;
         this.emit(':tell', "Goodbye!");
     },
-    'Unhandled': function() {
+    'Unhandled': function () {
         console.log("UNHANDLED");
-        var message = 'We do not have this recipe, please say one of' + recipeList ;
+        var message = 'We do not have this recipe, please say one of' + recipeList;
         this.emit(':ask', message, message);
     }
 });
 
 var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
-     'NewSession': function () {
+    'NewSession': function () {
         this.handler.state = '';
         this.emitWithState('NewSession'); // Equivalent to the Start Mode NewSession handler
     },
-    'IngredientIntent': function() {
-
+    'MainIntent': function () {
+        var user_res = this.event.request.intent.slots.item.value;
+        // console.log('user chose: ' + user_res);
+        if (user_res === "what can I say") {
+            this.emit(':ask', 'you can say' + recipeList);
+            //list of other items we can say at this point?
+        } else if (user_res === "exit" || user_res === "quit") {
+            this.handler.state = states.MAINMODE;
+            this.emit(':ask', "Main menu, what recipe would you like to find?");
+        }
     },
-    'AMAZON.HelpIntent': function() {
+    'IngredientIntent': function () {
+        var user_res = this.event.request.intent.slots.ing_command.value;
+        // this.emit("")
+        if (!this.attributes["ingredientList"]) {
+            var curRepIngredients;
+            var ingredientsArray;
+            var curRep = this.attributes['currentRecipe'].toLowerCase();
+            recipeTable.Items.forEach(function (recipe) {
+                if (curRep === recipe.RecipeName.toLowerCase()) {
+                    curRepIngredients = recipe.Ingredients;
+                    ingredientsArray = curRepIngredients.split("\n");
+                }
+            });
+            this.attributes["ingredientList"] = ingredientsArray;
+        }
+        var curIndex = this.attributes['currentIngredientIndex'];
+        var alexaIngred;
+        if (user_res === "next ingredient" || user_res === "ingredients" || user_res === "what are the ingredients") {
+            alexaIngred = this.attributes['ingredientList'][curIndex];
+
+            if (curIndex == (this.attributes['ingredientList'].length - 1)) {
+                this.handler.state = states.DIRECTIONMODE;
+                this.emit(":ask", alexaIngred + " is the last ingredient, now going to directions");
+            }
+            // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
+            this.attributes['currentIngredientIndex'] = curIndex + 1;
+            this.emit(":ask", alexaIngred);
+        }
+        if (user_res === "last ingredient") {
+            if (curIndex <= 0) {
+                curIndex = 1;
+                this.emit(":ask", alexaIngred + "is the first ingredient, please say next ingredient");
+            }
+            alexaIngred = this.attributes['ingredientList'][curIndex - 1];
+            // this.attributes['currentIngredientIndex'] = curIndex;
+            this.emit(":ask", "the last mentioned ingredient is " + alexaIngred);
+        }
+        if (user_res === "start again") {
+            this.attributes['currentIngredientIndex'] = 0;
+            curIndex = this.attributes['currentIngredientIndex'];
+            alexaIngred = this.attributes['ingredientList'][curIndex];
+
+            if (curIndex == (this.attributes['ingredientList'].length - 1)) {
+                this.handler.state = states.DIRECTIONMODE;
+                this.emit(":ask", alexaIngred + " is the last ingredient, now going to directions");
+            }
+            // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
+            this.attributes['currentIngredientIndex'] = curIndex + 1;
+            this.emit(":ask", alexaIngred);
+        }
+        // user_res === "exit" || user_res === "quit" ||
+        if (user_res === "main menu" ) {
+            this.handler.state = states.MAINMODE;
+            this.emit(":ask", "going back to main menu. You can say what recipe you want" );
+        }
+    },
+    'AMAZON.HelpIntent': function () {
         this.emit(':ask', 'I am thinking of a number between zero and one hundred, try to guess and I will tell you' +
             ' if it is higher or lower.', 'Try saying a number.');
     },
-    "AMAZON.StopIntent": function() {
-        console.log("STOPINTENT");
-      this.emit(':tell', "Goodbye!");  
-    },
-    "AMAZON.CancelIntent": function() {
-        console.log("CANCELINTENT");
-    },
+    // "AMAZON.StopIntent": function () {
+    //     console.log("STOPINTENT");
+    //     this.emit(':tell', "Goodbye!");
+    // },
+    // "AMAZON.CancelIntent": function () {
+    //     console.log("CANCELINTENT");
+    // },
     'SessionEndedRequest': function () {
         console.log("SESSIONENDEDREQUEST");
         this.attributes['endedSessionCount'] += 1;
         this.emit(':tell', "Goodbye!");
     },
-    'Unhandled': function() {
+    'Unhandled': function () {
         console.log("UNHANDLED");
-        this.emit(':ask', 'Sorry, I didn\'t get that. Try saying a number.', 'Try saying a number.');
+        this.emit(':ask', 'inside ingredient');
     }
 })
 
@@ -159,34 +222,34 @@ var directionHandlers = Alexa.CreateStateHandler(states.DIRECTIONMODE, {
         this.handler.state = '';
         this.emitWithState('NewSession'); // Equivalent to the Start Mode NewSession handler
     },
-    'NumberGuessIntent': function() {
+    'NumberGuessIntent': function () {
         var guessNum = parseInt(this.event.request.intent.slots.number.value);
         var targetNum = this.attributes["guessNumber"];
         console.log('user guessed: ' + guessNum);
 
-        if(guessNum > targetNum){
+        if (guessNum > targetNum) {
             this.emit('TooHigh', guessNum);
-        } else if( guessNum < targetNum){
+        } else if (guessNum < targetNum) {
             this.emit('TooLow', guessNum);
-        // } else if (guessNum === targetNum){
-        //     // With a callback, use the arrow function to preserve the correct 'this' context
-        //     this.emit('JustRight', () => {
-        //         this.emit(':ask', guessNum.toString() + 'is correct! Would you like to play a new game?',
-        //         'Say yes to start a new game, or no to end the game.');
-        // })
+            // } else if (guessNum === targetNum){
+            //     // With a callback, use the arrow function to preserve the correct 'this' context
+            //     this.emit('JustRight', () => {
+            //         this.emit(':ask', guessNum.toString() + 'is correct! Would you like to play a new game?',
+            //         'Say yes to start a new game, or no to end the game.');
+            // })
         } else {
             this.emit('NotANum');
         }
     },
-    'AMAZON.HelpIntent': function() {
+    'AMAZON.HelpIntent': function () {
         this.emit(':ask', 'I am thinking of a number between zero and one hundred, try to guess and I will tell you' +
             ' if it is higher or lower.', 'Try saying a number.');
     },
-    "AMAZON.StopIntent": function() {
+    "AMAZON.StopIntent": function () {
         console.log("STOPINTENT");
-      this.emit(':tell', "Goodbye!");  
+        this.emit(':tell', "Goodbye!");
     },
-    "AMAZON.CancelIntent": function() {
+    "AMAZON.CancelIntent": function () {
         console.log("CANCELINTENT");
     },
     'SessionEndedRequest': function () {
@@ -194,26 +257,26 @@ var directionHandlers = Alexa.CreateStateHandler(states.DIRECTIONMODE, {
         this.attributes['endedSessionCount'] += 1;
         this.emit(':tell', "Goodbye!");
     },
-    'Unhandled': function() {
+    'Unhandled': function () {
         console.log("UNHANDLED");
-        this.emit(':ask', 'Sorry, I didn\'t get that. Try saying a number.', 'Try saying a number.');
+        this.emit(':ask', 'inside direction');
     }
 });
 
 // These handlers are not bound to a state
 var guessAttemptHandlers = {
-    'TooHigh': function(val) {
+    'TooHigh': function (val) {
         this.emit(':ask', val.toString() + ' is too high.', 'Try saying a smaller number.');
     },
-    'TooLow': function(val) {
+    'TooLow': function (val) {
         this.emit(':ask', val.toString() + ' is too low.', 'Try saying a larger number.');
     },
-    'JustRight': function(callback) {
+    'JustRight': function (callback) {
         this.handler.state = states.STARTMODE;
         this.attributes['gamesPlayed']++;
         callback();
     },
-    'NotANum': function() {
+    'NotANum': function () {
         this.emit(':ask', 'Sorry, I didn\'t get that. Try saying a number.', 'Try saying a number.');
     }
 };
