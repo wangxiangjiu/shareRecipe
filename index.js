@@ -58,12 +58,12 @@ var newSessionHandlers = {
         //this.emit(':ask', recipeArray);
         this.emit(':ask', 'recipe assistant, what recipe would you like to make? You can say' + recipeList);
     },
-    // "AMAZON.StopIntent": function () {
-    //     this.emit(':tell', "Goodbye!");
-    // },
-    // "AMAZON.CancelIntent": function () {
-    //     this.emit(':tell', "Goodbye!");
-    // },
+    "AMAZON.StopIntent": function () {
+        this.emit(':tell', "Goodbye!");
+    },
+    "AMAZON.CancelIntent": function () {
+        this.emit(':tell', "Goodbye!");
+    },
     'SessionEndedRequest': function () {
         console.log('session ended!');
         //this.attributes['endedSessionCount'] += 1;
@@ -93,6 +93,8 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
                 this.attributes['currentRecipe'] = food.toString();
                 this.attributes['ingredientList'] = null;
                 this.attributes['currentIngredientIndex'] = 0;
+                this.attributes['directionList'] = null;
+                this.attributes['currentDirectionIndex'] = 0;
                 this.handler.state = states.INGREDIENTMODE;
                 this.emit(':ask', 'you can say what are the ingredients');
             } else {
@@ -103,14 +105,14 @@ var mainHandlers = Alexa.CreateStateHandler(states.MAINMODE, {
     'AMAZON.HelpIntent': function () {
         this.emit(':ask', 'you can say sushi rolls, sandwiches');
     },
-    // "AMAZON.StopIntent": function () {
-    //     console.log("STOPINTENT");
-    //     this.emit(':tell', "Goodbye!");
-    // },
-    // "AMAZON.CancelIntent": function () {
-    //     console.log("CANCELINTENT");
-    //     this.emit(':tell', "Goodbye!");
-    // },
+    "AMAZON.StopIntent": function () {
+        console.log("STOPINTENT");
+        this.emit(':tell', "Goodbye!");
+    },
+    "AMAZON.CancelIntent": function () {
+        console.log("CANCELINTENT");
+        this.emit(':tell', "Goodbye!");
+    },
     'SessionEndedRequest': function () {
         console.log("SESSIONENDEDREQUEST");
         //this.attributes['endedSessionCount'] += 1;
@@ -127,17 +129,6 @@ var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
     'NewSession': function () {
         this.handler.state = '';
         this.emitWithState('NewSession'); // Equivalent to the Start Mode NewSession handler
-    },
-    'MainIntent': function () {
-        var user_res = this.event.request.intent.slots.item.value;
-        // console.log('user chose: ' + user_res);
-        if (user_res === "what can I say") {
-            this.emit(':ask', 'you can say' + recipeList);
-            //list of other items we can say at this point?
-        } else if (user_res === "exit" || user_res === "quit") {
-            this.handler.state = states.MAINMODE;
-            this.emit(':ask', "Main menu, what recipe would you like to find?");
-        }
     },
     'IngredientIntent': function () {
         var user_res = this.event.request.intent.slots.ing_command.value;
@@ -183,29 +174,27 @@ var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
 
             if (curIndex == (this.attributes['ingredientList'].length - 1)) {
                 this.handler.state = states.DIRECTIONMODE;
-                this.emit(":ask", alexaIngred + " is the last ingredient, now going to directions");
+                this.emit(":ask", alexaIngred + " is the last ingredient, now going to directions. Say read recipe");
             }
             // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
             this.attributes['currentIngredientIndex'] = curIndex + 1;
             this.emit(":ask", alexaIngred);
         }
-        // user_res === "exit" || user_res === "quit" ||
         if (user_res === "main menu" ) {
             this.handler.state = states.MAINMODE;
             this.emit(":ask", "going back to main menu. You can say what recipe you want" );
         }
     },
     'AMAZON.HelpIntent': function () {
-        this.emit(':ask', 'I am thinking of a number between zero and one hundred, try to guess and I will tell you' +
-            ' if it is higher or lower.', 'Try saying a number.');
+        this.emit(':ask', 'You can say next ingredient, ingredients, what are the ingredients, last ingredient and start again', 'Try saying next ingredient');
     },
-    // "AMAZON.StopIntent": function () {
-    //     console.log("STOPINTENT");
-    //     this.emit(':tell', "Goodbye!");
-    // },
-    // "AMAZON.CancelIntent": function () {
-    //     console.log("CANCELINTENT");
-    // },
+    "AMAZON.StopIntent": function () {
+        console.log("STOPINTENT");
+        this.emit(':tell', "Goodbye!");
+    },
+    "AMAZON.CancelIntent": function () {
+        console.log("CANCELINTENT");
+    },
     'SessionEndedRequest': function () {
         console.log("SESSIONENDEDREQUEST");
         this.attributes['endedSessionCount'] += 1;
@@ -215,30 +204,66 @@ var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
         console.log("UNHANDLED");
         this.emit(':ask', 'inside ingredient');
     }
-})
+});
 
 var directionHandlers = Alexa.CreateStateHandler(states.DIRECTIONMODE, {
     'NewSession': function () {
         this.handler.state = '';
         this.emitWithState('NewSession'); // Equivalent to the Start Mode NewSession handler
     },
-    'NumberGuessIntent': function () {
-        var guessNum = parseInt(this.event.request.intent.slots.number.value);
-        var targetNum = this.attributes["guessNumber"];
-        console.log('user guessed: ' + guessNum);
+    'DirectionIntent': function() {
+        var user_res = this.event.request.intent.slots.direction.value;
+        // this.emit("")
+        if (!this.attributes["directionList"]) {
+            var curRepDirections;
+            var directionsArray;
+            var curRep = this.attributes['currentRecipe'].toLowerCase();
+            recipeTable.Items.forEach(function (recipe) {
+                if (curRep === recipe.RecipeName.toLowerCase()) {
+                    curRepDirections = recipe.Directions;
+                    directionsArray = curRepDirections.split("\n");
+                }
+            });
+            this.attributes["directionList"] = directionsArray;
+        }
+        var curIndex = this.attributes['currentDirectionIndex'];
+        var alexaDirect;
+        if (user_res === "read recipe" || user_res === "start") {
+            alexaDirect = this.attributes['directionList'][curIndex];
 
-        if (guessNum > targetNum) {
-            this.emit('TooHigh', guessNum);
-        } else if (guessNum < targetNum) {
-            this.emit('TooLow', guessNum);
-            // } else if (guessNum === targetNum){
-            //     // With a callback, use the arrow function to preserve the correct 'this' context
-            //     this.emit('JustRight', () => {
-            //         this.emit(':ask', guessNum.toString() + 'is correct! Would you like to play a new game?',
-            //         'Say yes to start a new game, or no to end the game.');
-            // })
-        } else {
-            this.emit('NotANum');
+            if (curIndex == (this.attributes['directionList'].length - 1)) {
+                this.handler.state = states.MAINMODE;
+                this.emit(":ask", alexaDirect + " is the last step, you are finished");
+            }
+            // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
+            this.attributes['currentDirectionIndex'] = curIndex + 1;
+            this.emit(":ask", alexaDirect);
+        }
+        if (user_res === "last step") {
+            if (curIndex <= 0) {
+                curIndex = 1;
+                this.emit(":ask", alexaDirect + "is the first step, please say next step");
+            }
+            alexaDirect = this.attributes['directionList'][curIndex - 1];
+            // this.attributes['currentIngredientIndex'] = curIndex;
+            this.emit(":ask", "the last mentioned step is " + alexaDirect);
+        }
+        if (user_res === "start again") {
+            this.attributes['currentDirectionIndex'] = 0;
+            curIndex = this.attributes['currentDirectionIndex'];
+            alexaDirect = this.attributes['directionList'][curIndex];
+
+            if (curIndex == (this.attributes['directionList'].length - 1)) {
+                this.handler.state = states.MAINMODE;
+                this.emit(":ask", alexaDirect + " is the last step, congratulations, you are finished");
+            }
+            // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
+            this.attributes['currentDirectionIndex'] = curIndex + 1;
+            this.emit(":ask", alexaDirect);
+        }
+        if (user_res === "main menu" ) {
+            this.handler.state = states.MAINMODE;
+            this.emit(":ask", "going back to main menu. You can say what recipe you want" );
         }
     },
     'AMAZON.HelpIntent': function () {
