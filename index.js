@@ -149,16 +149,13 @@ var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
         var alexaIngred;
         if (user_res === "next ingredient" || user_res === "ingredients" || user_res === "what are the ingredients") {
             alexaIngred = this.attributes['ingredientList'][curIndex];
-
             if (curIndex == (this.attributes['ingredientList'].length - 1)) {
                 this.handler.state = states.DIRECTIONMODE;
                 this.emit(":ask", alexaIngred + " is the last ingredient, now going to directions");
             }
-            // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
             this.attributes['currentIngredientIndex'] = curIndex + 1;
             this.emit(":ask", alexaIngred);
-        }
-        if (user_res === "last ingredient") {
+        } else if (user_res === "last ingredient") {
             if (curIndex <= 0) {
                 curIndex = 1;
                 this.emit(":ask", alexaIngred + "is the first ingredient, please say next ingredient");
@@ -166,8 +163,7 @@ var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
             alexaIngred = this.attributes['ingredientList'][curIndex - 1];
             // this.attributes['currentIngredientIndex'] = curIndex;
             this.emit(":ask", "the last mentioned ingredient is " + alexaIngred);
-        }
-        if (user_res === "start again") {
+        } else if (user_res === "start again") {
             this.attributes['currentIngredientIndex'] = 0;
             curIndex = this.attributes['currentIngredientIndex'];
             alexaIngred = this.attributes['ingredientList'][curIndex];
@@ -176,13 +172,13 @@ var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
                 this.handler.state = states.DIRECTIONMODE;
                 this.emit(":ask", alexaIngred + " is the last ingredient, now going to directions. Say read recipe.");
             }
-            // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
             this.attributes['currentIngredientIndex'] = curIndex + 1;
             this.emit(":ask", alexaIngred);
-        }
-        if (user_res === "main menu" ) {
+        } else if (user_res === "main menu" ) {
             this.handler.state = states.MAINMODE;
             this.emit(":ask", "going back to main menu. You can say what recipe you want." );
+        } else {
+            this.emit(":ask", "please say next ingredient, last ingredient");
         }
     },
     'AMAZON.HelpIntent': function () {
@@ -228,18 +224,15 @@ var directionHandlers = Alexa.CreateStateHandler(states.DIRECTIONMODE, {
         }
         var curIndex = this.attributes['currentDirectionIndex'];
         var alexaDirect;
-        if (user_res === "read recipe" || user_res === "start" || user_res === "next step") {
+        if (user_res === "read recipe" || user_res === "start" || user_res === "next step" ) {
             alexaDirect = this.attributes['directionList'][curIndex];
-
             if (curIndex == (this.attributes['directionList'].length - 1)) {
-                this.handler.state = states.MAINMODE;
-                this.emit(":ask", alexaDirect + " is the last step, you are finished.");
+                this.emit(":ask", alexaDirect + " is the last step, congratulations, you are finished. If you want to go back to main menu, say main menu.");
             }
             // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
             this.attributes['currentDirectionIndex'] = curIndex + 1;
             this.emit(":ask", alexaDirect);
-        }
-        if (user_res === "last step") {
+        } else if (user_res === "last step") {
             if (curIndex <= 0) {
                 curIndex = 1;
                 this.emit(":ask", alexaDirect + "is the first step, please say next step.");
@@ -247,23 +240,22 @@ var directionHandlers = Alexa.CreateStateHandler(states.DIRECTIONMODE, {
             alexaDirect = this.attributes['directionList'][curIndex - 1];
             // this.attributes['currentIngredientIndex'] = curIndex;
             this.emit(":ask", "the last mentioned step is " + alexaDirect);
-        }
-        if (user_res === "start again") {
+        } else if (user_res === "start again") {
             this.attributes['currentDirectionIndex'] = 0;
             curIndex = this.attributes['currentDirectionIndex'];
             alexaDirect = this.attributes['directionList'][curIndex];
 
             if (curIndex == (this.attributes['directionList'].length - 1)) {
-                this.handler.state = states.MAINMODE;
                 this.emit(":ask", alexaDirect + " is the last step, congratulations, you are finished. If you want to go back to main menu, say main menu.");
             }
             // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
             this.attributes['currentDirectionIndex'] = curIndex + 1;
             this.emit(":ask", alexaDirect);
-        }
-        if (user_res === "main menu" ) {
+        } else if (user_res === "main menu" ) {
             this.handler.state = states.MAINMODE;
             this.emit(":ask", "going back to main menu. You can say what recipe you want." );
+        } else {
+            this.emit(":ask", "please say next step, last step.")
         }
     },
     'AMAZON.HelpIntent': function () {
