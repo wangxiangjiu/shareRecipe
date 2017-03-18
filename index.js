@@ -174,7 +174,7 @@ var ingredientHandlers = Alexa.CreateStateHandler(states.INGREDIENTMODE, {
             }
             this.attributes['currentIngredientIndex'] = curIndex + 1;
             this.emit(":ask", alexaIngred);
-        } else if (user_res === "main menu" ) {
+        } else if (user_res === "main menu") {
             this.handler.state = states.MAINMODE;
             this.emit(":ask", "going back to main menu. You can say what recipe you want." );
         } else {
@@ -229,7 +229,6 @@ var directionHandlers = Alexa.CreateStateHandler(states.DIRECTIONMODE, {
             if (curIndex == (this.attributes['directionList'].length - 1)) {
                 this.emit(":ask", alexaDirect + " is the last step, congratulations, you are finished. If you want to go back to main menu, say main menu.");
             }
-            // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
             this.attributes['currentDirectionIndex'] = curIndex + 1;
             this.emit(":ask", alexaDirect);
         } else if (user_res === "last step") {
@@ -238,17 +237,14 @@ var directionHandlers = Alexa.CreateStateHandler(states.DIRECTIONMODE, {
                 this.emit(":ask", alexaDirect + "is the first step, please say next step.");
             }
             alexaDirect = this.attributes['directionList'][curIndex - 1];
-            // this.attributes['currentIngredientIndex'] = curIndex;
             this.emit(":ask", "the last mentioned step is " + alexaDirect);
         } else if (user_res === "start again") {
             this.attributes['currentDirectionIndex'] = 0;
             curIndex = this.attributes['currentDirectionIndex'];
             alexaDirect = this.attributes['directionList'][curIndex];
-
             if (curIndex == (this.attributes['directionList'].length - 1)) {
                 this.emit(":ask", alexaDirect + " is the last step, congratulations, you are finished. If you want to go back to main menu, say main menu.");
             }
-            // this.emit(":ask", this.attributes['ingredientList'].length.toString() + " curindex: " + curIndex.toString());
             this.attributes['currentDirectionIndex'] = curIndex + 1;
             this.emit(":ask", alexaDirect);
         } else if (user_res === "main menu" ) {
